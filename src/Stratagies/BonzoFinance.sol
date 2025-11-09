@@ -1,4 +1,8 @@
-contract SimpleStakingStrategy is IStrategy {
+//SPDX-License-Identifier: MIT
+
+pragma solidity 0.8.29;
+
+contract BonzoFinance is IStrategy {
     
     /// @notice The vault contract that controls this strategy.
     address public immutable vault;
