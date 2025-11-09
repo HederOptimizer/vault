@@ -2,49 +2,21 @@
 pragma solidity 0.8.29;
 
 import {ERC4626Native} from "./ERC4626/ERC4626Native.sol";
-
-/**
- * @title IStrategy
- * @notice Interface for a simple ETH staking strategy.
- * Strategies are managed by the LiquidStakingVault.
- */
-interface IStrategy {
-    /**
-     * @notice Deposit ETH into the strategy.
-     * @dev MUST be payable.
-     * @dev MUST revert if caller is not the vault.
-     */
-    function deposit() external payable;
-
-    /**
-     * @notice Withdraw ETH from the strategy.
-     * @param amount The amount of ETH to withdraw.
-     * @dev MUST revert if caller is not the vault.
-     * @dev MUST send the ETH to the vault.
-     */
-    function withdraw(uint256 amount) external;
-
-    /**
-     * @notice Reports the total ETH balance of the strategy.
-     * @dev This should include any rewards earned.
-     * @return balance The total ETH held by the strategy.
-     */
-    function balance() external view returns (uint256);
-}
+import {IStrategy} from "./interfaces/IStrategy.sol";
 
 
 /*//////////////////////////////////////////////////////////////
 //
-// 3. LIQUID STAKING VAULT IMPLEMENTATION
+// LIQUID STAKING VAULT IMPLEMENTATION
 //
 //////////////////////////////////////////////////////////////*/
 
 /**
- * @title LiquidStakingVault
- * @notice An ERC4626 vault for liquid-staking native ETH into various strategies.
+ * @title HBARVault
+ * @notice An ERC4626 vault for liquid-staking native HBAR into various strategies.
  * @dev Inherits from ERC4626Native and implements its abstract `totalAssets` function.
  */
-contract LiquidStakingVault is ERC4626Native {
+contract HBARVault is ERC4626Native {
     
     // --- State Variables ---
 
@@ -86,9 +58,9 @@ contract LiquidStakingVault is ERC4626Native {
     // --- ERC4626 Implementation ---
 
     /**
-     * @notice Calculates the total ETH managed by the vault.
-     * @dev This is the sum of ETH held idle in this contract AND
-     * all ETH held in the registered strategies (including rewards).
+     * @notice Calculates the total HBAR managed by the vault.
+     * @dev This is the sum of HBAR held idle in this contract AND
+     * all HBAR held in the registered strategies (including rewards).
      * This is the core implementation required by ERC4626Native.
      */
     function totalAssets() public view override returns (uint256) {
@@ -104,27 +76,27 @@ contract LiquidStakingVault is ERC4626Native {
     /**
      * @notice Hook called after a deposit.
      * @dev Deposits the received assets into the active strategy.
-     * If no active strategy is set, the ETH remains in the vault.
+     * If no active strategy is set, the HBAR remains in the vault.
      */
     function afterDeposit(uint256 assets, uint256 shares) internal override {
-        // If there's an active strategy, deposit the new ETH into it
+        // If there's an active strategy, deposit the new HBAR into it
         if (address(activeStrategy) != address(0)) {
             activeStrategy.deposit{value: assets}();
         }
-        // If no active strategy, ETH just sits in this contract,
+        // If no active strategy, HBAR just sits in this contract,
         // which is correctly accounted for by totalAssets().
     }
 
     /**
      * @notice Hook called before a withdrawal.
-     * @dev Ensures the vault has enough liquid ETH to cover the withdrawal.
-     * It pulls ETH from its own balance first, then from strategies if needed.
+     * @dev Ensures the vault has enough liquid HBAR to cover the withdrawal.
+     * It pulls HBAR from its own balance first, then from strategies if needed.
      */
     function beforeWithdraw(uint256 assets, uint256 shares) internal override {
-        uint256 ethInContract = address(this).balance;
+        uint256 HBARInContract = address(this).balance;
 
-        if (ethInContract < assets) {
-            uint256 needed = assets - ethInContract;
+        if (HBARInContract < assets) {
+            uint256 needed = assets - HBARInContract;
 
             // Need to pull funds from strategies.
             // We'll iterate in reverse (LIFO) for simplicity.
@@ -218,10 +190,10 @@ contract LiquidStakingVault is ERC4626Native {
     /**
      * @notice Rebalances all vault assets according to specified targets.
      * @dev This function first withdraws ALL funds from ALL strategies,
-     * then redeploys the ETH to the target strategies.
+     * then redeploys the HBAR to the target strategies.
      * @param _targetStrategies Array of strategies to deploy funds to.
-     * @param _targetAmounts Array of ETH amounts to deploy to each strategy.
-     * @dev Any ETH not allocated will be held idle in the vault.
+     * @param _targetAmounts Array of HBAR amounts to deploy to each strategy.
+     * @dev Any HBAR not allocated will be held idle in the vault.
      * @dev This is a simple but potentially gas-intensive implementation.
      */
     function rebalance(
@@ -268,10 +240,10 @@ contract LiquidStakingVault is ERC4626Native {
     // --- Receive ---
 
     /**
-     * @notice We must be able to receive ETH from strategy withdrawals.
+     * @notice We must be able to receive HBAR from strategy withdrawals.
      * @dev The base contract's receive() is external, so this is fine,
      * but we add an explicit receive() to be clear and to allow
-     * strategies (or anyone) to send ETH back.
+     * strategies (or anyone) to send HBAR back.
      * Strategies should be whitelist-based, but this provides a fallback.
      */
     receive() external payable override {}

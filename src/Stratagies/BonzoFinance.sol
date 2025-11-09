@@ -2,6 +2,8 @@
 
 pragma solidity 0.8.29;
 
+import {IStrategy} from "../interfaces/IStrategy.sol";
+
 contract BonzoFinance is IStrategy {
     
     /// @notice The vault contract that controls this strategy.

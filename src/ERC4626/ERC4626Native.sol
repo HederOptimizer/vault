@@ -209,5 +209,5 @@ abstract contract ERC4626Native is ERC20 {
      * as address(this).balance), effectively distributing its value to
      * all current vault share holders.
      */
-    receive() external payable {}
+    receive() external virtual payable {}
 }
