@@ -37,7 +37,11 @@ contract HBARVault is ERC4626Native {
     event StrategyAdded(address indexed strategy);
     event StrategyRemoved(address indexed strategy);
     event ActiveStrategyUpdated(address indexed strategy);
-    event Rebalanced(address indexed caller);
+    event Rebalanced(
+    address indexed sender, 
+    IStrategy[] strategies, 
+    uint256[] amounts
+);
 
     // --- Modifiers ---
 
@@ -234,7 +238,7 @@ contract HBARVault is ERC4626Native {
         }
         
         // Any remaining funds (totalBalance - totalAllocated) stay in the vault.
-        emit Rebalanced(msg.sender);
+        emit Rebalanced(msg.sender, _targetStrategies, _targetAmounts);
     }
 
     // --- Receive ---
